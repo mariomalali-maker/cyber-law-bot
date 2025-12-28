@@ -2,30 +2,65 @@
 <html>
   <head>
     <title>Cyber Law Assistant - UAE</title>
-    <meta charset="UTF-8"/>
+    <meta charset="UTF-8" />
   </head>
   <body style="font-family:Arial; background:#0f172a; color:#fff; padding:30px;">
     <h2>UAE Cyber Law Assistant</h2>
     <p>Ask something related to UAE cyber laws:</p>
 
-    <input id="question" style="padding:10px; width:300px;" placeholder="Ask here..." />
+    <input
+      id="question"
+      style="padding:10px; width:300px;"
+      placeholder="Ask here..."
+    />
     <button onclick="send()" style="padding:10px;">Send</button>
 
     <h3>Response:</h3>
-    <div id="answer" style="background:#1e293b; padding:20px; border-radius:10px;"></div>
+    <div
+      id="answer"
+      style="background:#1e293b; padding:20px; border-radius:10px; min-height:40px;"
+    ></div>
 
     <script>
-      async function send(){
-        const q = document.getElementById("question").value;
-        const res = await fetch("/api/chat", {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({question:q})
-        });
+      async function send() {
+        const qInput = document.getElementById("question");
+        const answerDiv = document.getElementById("answer");
+        const question = qInput.value.trim();
 
-        const data = await res.json();
-        document.getElementById("answer").innerText =
-          data.answer || "Error. Try again.";
+        if (!question) {
+          answerDiv.innerText = "Please type a question first.";
+          return;
+        }
+
+        answerDiv.innerText = "Thinking...";
+
+        try {
+          const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question }),
+          });
+
+          let data;
+          try {
+            data = await res.json();
+          } catch (e) {
+            console.error("JSON parse error:", e);
+            answerDiv.innerText = "Unexpected response from server.";
+            return;
+          }
+
+          if (data.answer) {
+            answerDiv.innerText = data.answer;
+          } else if (data.error) {
+            answerDiv.innerText = "Error: " + data.error;
+          } else {
+            answerDiv.innerText = "No answer was returned.";
+          }
+        } catch (err) {
+          console.error("Fetch error:", err);
+          answerDiv.innerText = "Network error talking to the server.";
+        }
       }
     </script>
   </body>
